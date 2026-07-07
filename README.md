@@ -128,7 +128,7 @@ Production URL:
 https://memeroast.xyz
 ```
 
-## Hackathon Demo
+## Demo
 
 - Website: https://memeroast.xyz
 - Docs: https://memeroast.xyz/docs
@@ -136,7 +136,7 @@ https://memeroast.xyz
 - Network: Arc Testnet `5042002`
 - Payment receiver: `0x87CE124f9c32B83b54255583E2a39CB6bcEADc46`
 - History contract: `0x95848A7eC8E597f4d862f25940dF5102A2782515`
-- Demo script: [docs/hackathon-submission.md](./docs/hackathon-submission.md)
+- Demo script: [docs/demo-script.md](./docs/demo-script.md)
 
 ## Arc Integration Notes
 

@@ -1,4 +1,4 @@
-# MemeRoast Hackathon Submission
+# MemeRoast Demo Script
 
 ## Project
 
