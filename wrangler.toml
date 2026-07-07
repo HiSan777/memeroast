@@ -1,0 +1,12 @@
+name = "memeroast"
+compatibility_date = "2026-06-26"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "out"
+
+[vars]
+NEXT_PUBLIC_ARC_TESTNET_RPC = "https://rpc.testnet.arc.network"
+NEXT_PUBLIC_ARC_CHAIN_ID = "5042002"
+NEXT_PUBLIC_SITE_URL = "https://memeroast.xyz"
+NEXT_PUBLIC_BUILDER_WALLET_ADDRESS = "0x87CE124f9c32B83b54255583E2a39CB6bcEADc46"
+NEXT_PUBLIC_REAL_IMAGE_ENABLED = "false"
+NEXT_PUBLIC_MEMEROAST_HISTORY_CONTRACT = "0x95848A7eC8E597f4d862f25940dF5102A2782515"

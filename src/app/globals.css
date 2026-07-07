@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #bef264;
+  color: #09090b;
+}
+
+.viral-confetti {
+  animation: viral-pop 900ms ease-out forwards;
+  background: var(--color);
+  border-radius: 2px;
+  height: 10px;
+  left: var(--x);
+  opacity: 0;
+  position: absolute;
+  top: 16px;
+  transform: translateY(0) rotate(0deg);
+  width: 6px;
+  animation-delay: var(--delay);
+}
+
+@keyframes viral-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0deg) scale(0.6);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(190px) rotate(280deg) scale(1);
+  }
+}
+
+.tab-panel-enter {
+  animation: tab-panel-enter 240ms ease-out both;
+}
+
+@keyframes tab-panel-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
