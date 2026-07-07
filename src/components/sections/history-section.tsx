@@ -7,13 +7,21 @@ import {
   ExternalLink,
   History,
   ImageIcon,
+  LoaderCircle,
+  RefreshCw,
   Send,
   Sparkles,
 } from "lucide-react";
-import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
+import { parseAbiItem } from "viem";
+import { useAccount, usePublicClient } from "wagmi";
 
 import { Button } from "@/components/ui/button";
 import { arcTestnet } from "@/config/arc";
+import {
+  MEMEROAST_HISTORY_CONTRACT,
+  MEMEROAST_HISTORY_START_BLOCK,
+} from "@/config/historyContract";
 import { personalities } from "@/config/personalities";
 import {
   copyImageToClipboard,
@@ -24,8 +32,29 @@ import {
 import { shortAddress } from "@/lib/wallet";
 import { useMemeRoastStore } from "@/store/memeroast-store";
 
+type OnChainRoastRecord = {
+  blockNumber: bigint;
+  caption?: string;
+  createdAt?: number;
+  imageUrl?: string;
+  metadataUri: string;
+  personalityId?: string;
+  prompt?: string;
+  transactionHash: `0x${string}`;
+};
+
+const roastRecordedEvent = parseAbiItem(
+  "event RoastRecorded(address indexed user, string metadataUri)",
+);
+
 export function HistorySection() {
   const { address } = useAccount();
+  const publicClient = usePublicClient({ chainId: arcTestnet.id });
+  const [onChainRecords, setOnChainRecords] = useState<OnChainRoastRecord[]>(
+    [],
+  );
+  const [isLoadingOnChain, setIsLoadingOnChain] = useState(false);
+  const [onChainError, setOnChainError] = useState<string>();
   const history = useMemeRoastStore((state) => state.history);
   const shareMessage = useMemeRoastStore((state) => state.shareMessage);
   const showToast = useMemeRoastStore((state) => state.showToast);
@@ -34,6 +63,75 @@ export function HistorySection() {
         (item) => item.walletAddress.toLowerCase() === address.toLowerCase(),
       )
     : [];
+
+  useEffect(() => {
+    setOnChainRecords([]);
+    setOnChainError(undefined);
+  }, [address]);
+
+  async function loadOnChainHistory() {
+    if (!address) {
+      showToast({
+        message: "Connect wallet before reading Arc Testnet history.",
+        title: "Wallet missing",
+        tone: "error",
+      });
+      return;
+    }
+
+    if (!MEMEROAST_HISTORY_CONTRACT || !publicClient) {
+      setOnChainError("History contract is not configured.");
+      return;
+    }
+
+    try {
+      setIsLoadingOnChain(true);
+      setOnChainError(undefined);
+
+      const logs = await publicClient.getLogs({
+        address: MEMEROAST_HISTORY_CONTRACT,
+        args: {
+          user: address,
+        },
+        event: roastRecordedEvent,
+        fromBlock: MEMEROAST_HISTORY_START_BLOCK,
+        toBlock: "latest",
+      });
+      const records = await Promise.all(
+        [...logs].reverse().map(async (log) => {
+          const metadataUri = log.args.metadataUri ?? "";
+          const metadata = await fetchRoastMetadata(metadataUri);
+
+          return {
+            blockNumber: log.blockNumber,
+            caption: metadata?.caption,
+            createdAt: metadata?.createdAt,
+            imageUrl: metadata?.image?.url,
+            metadataUri,
+            personalityId: metadata?.personalityId,
+            prompt: metadata?.prompt,
+            transactionHash: log.transactionHash,
+          } satisfies OnChainRoastRecord;
+        }),
+      );
+
+      setOnChainRecords(records);
+      showToast({
+        message:
+          records.length > 0
+            ? `${records.length} on-chain roast record${records.length === 1 ? "" : "s"} loaded from Arc.`
+            : "No on-chain roast records found for this wallet yet.",
+        title: "Arc history synced",
+        tone: "success",
+      });
+    } catch {
+      setOnChainError(
+        "Could not read Arc history logs. Try again after switching to Arc Testnet.",
+      );
+    } finally {
+      setIsLoadingOnChain(false);
+    }
+  }
 
   async function shareOnX(item: (typeof history)[number]) {
     const result = await prepareXShare({
@@ -112,6 +210,111 @@ export function HistorySection() {
             <p className="rounded-md border border-lime-300/20 bg-lime-300/10 px-3 py-2 text-sm text-lime-100">
               {shareMessage}
             </p>
+          )}
+        </div>
+
+        <div className="mt-8 rounded-md border border-lime-300/20 bg-[radial-gradient(circle_at_top_left,rgba(190,242,100,0.12),transparent_20rem),rgba(255,255,255,0.06)] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase text-lime-100">
+                Arc on-chain history
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                Read `RoastRecorded` events from MemeRoastHistory for the
+                connected wallet.
+              </p>
+            </div>
+            <Button
+              disabled={!address || isLoadingOnChain}
+              onClick={loadOnChainHistory}
+              type="button"
+              variant="secondary"
+            >
+              {isLoadingOnChain ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+              {isLoadingOnChain ? "Syncing..." : "Sync Arc History"}
+            </Button>
+          </div>
+
+          <div className="mt-3 grid gap-2 text-xs text-zinc-400 sm:grid-cols-2">
+            <p>
+              Contract:{" "}
+              <span className="break-all font-bold text-zinc-200">
+                {MEMEROAST_HISTORY_CONTRACT ?? "Not configured"}
+              </span>
+            </p>
+            <p>
+              Start block:{" "}
+              <span className="font-bold text-zinc-200">
+                {MEMEROAST_HISTORY_START_BLOCK.toString()}
+              </span>
+            </p>
+          </div>
+
+          {onChainError && (
+            <p className="mt-3 rounded-md border border-pink-300/20 bg-pink-300/10 p-3 text-sm text-pink-100">
+              {onChainError}
+            </p>
+          )}
+
+          {onChainRecords.length > 0 && (
+            <div className="mt-4 grid gap-3">
+              {onChainRecords.map((record) => (
+                <article
+                  className="rounded-md border border-white/10 bg-zinc-950/70 p-3"
+                  key={`${record.transactionHash}-${record.blockNumber.toString()}`}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap gap-2 text-[11px] font-black uppercase">
+                        <span className="rounded-md bg-lime-300/12 px-2 py-1 text-lime-100">
+                          On-chain
+                        </span>
+                        <span className="rounded-md bg-white/8 px-2 py-1 text-zinc-300">
+                          Block {record.blockNumber.toString()}
+                        </span>
+                        {record.personalityId && (
+                          <span className="rounded-md bg-cyan-300/12 px-2 py-1 text-cyan-100">
+                            {formatTemplate(record.personalityId)}
+                          </span>
+                        )}
+                      </div>
+                      {record.caption && (
+                        <p className="mt-3 text-sm font-bold leading-6 text-white">
+                          {record.caption}
+                        </p>
+                      )}
+                      {record.prompt && (
+                        <p className="mt-2 text-xs text-zinc-400">
+                          Prompt:{" "}
+                          <span className="font-bold text-zinc-300">
+                            {record.prompt}
+                          </span>
+                        </p>
+                      )}
+                      <p className="mt-2 break-all text-xs text-zinc-500">
+                        Metadata:{" "}
+                        <span className="font-bold text-zinc-300">
+                          {record.metadataUri}
+                        </span>
+                      </p>
+                    </div>
+                    <a
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-lime-300/20 bg-lime-300/10 px-3 py-2 text-xs font-black text-lime-100 transition hover:border-lime-300/40"
+                      href={getArcScanTxUrl(record.transactionHash)}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <ExternalLink className="size-3" />
+                      ArcScan
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
           )}
         </div>
 
@@ -327,6 +530,48 @@ function getItemTxHash(item: {
 
 function getArcScanTxUrl(hash: `0x${string}`) {
   return `${arcTestnet.blockExplorers.default.url}/tx/${hash}`;
+}
+
+type RoastMetadata = {
+  caption?: string;
+  createdAt?: number;
+  image?: {
+    url?: string;
+  };
+  personalityId?: string;
+  prompt?: string;
+};
+
+async function fetchRoastMetadata(metadataUri: string) {
+  const url = resolveMetadataUrl(metadataUri);
+
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    return (await response.json()) as RoastMetadata;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveMetadataUrl(metadataUri: string) {
+  if (metadataUri.startsWith("ipfs://")) {
+    return `https://gateway.pinata.cloud/ipfs/${metadataUri.replace("ipfs://", "")}`;
+  }
+
+  if (metadataUri.startsWith("https://") || metadataUri.startsWith("http://")) {
+    return metadataUri;
+  }
+
+  return undefined;
 }
 
 

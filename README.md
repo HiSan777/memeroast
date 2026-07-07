@@ -24,7 +24,7 @@ User guide: [DOCS.md](./DOCS.md)
 - Real image API hook for Fal.ai / Replicate / Grok-compatible image providers
 - Cloudinary/IPFS metadata storage hooks
 - Optional Arc Testnet on-chain history via `MemeRoastHistory.recordRoast(metadataUri)`
-- Wallet-scoped local history with optional on-chain event anchoring
+- Wallet-scoped local history plus Arc event sync from `RoastRecorded`
 - Dynamic leaderboard with filters, random wallets, random personalities, and auto-refresh
 - Clean Share on X flow for creator-ready captions
 - Copy PNG image, download PNG image, and caption-only X posting
@@ -43,7 +43,7 @@ User guide: [DOCS.md](./DOCS.md)
 
 - Real meme image API with Cloudinary upload
 - IPFS metadata storage
-- Optional on-chain history event contract
+- On-chain history event sync
 - Share on X automation
 
 **Phase 3: Later**
@@ -136,13 +136,15 @@ https://memeroast.xyz
 - Network: Arc Testnet `5042002`
 - Payment receiver: `0x87CE124f9c32B83b54255583E2a39CB6bcEADc46`
 - History contract: `0x95848A7eC8E597f4d862f25940dF5102A2782515`
+- Demo script: [docs/hackathon-submission.md](./docs/hackathon-submission.md)
 
 ## Arc Integration Notes
 
 Current nanopayment sends a real Arc Testnet native USDC transfer to the public
 MemeRoast receiver wallet. Final meme metadata can be stored via the configured
 metadata route and anchored by calling `recordRoast(metadataUri)` on the Arc
-Testnet history contract.
+Testnet history contract. The `My History` tab can also sync `RoastRecorded`
+events back from Arc for the connected wallet.
 
 Agent execution and image generation are provider-ready. Without real image API
 keys, the app uses the built-in Flux-style SVG renderer so the demo remains

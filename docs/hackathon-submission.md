@@ -51,6 +51,21 @@ and a simple on-chain history anchor for generated AI content.
 7. Sign the USDC payment.
 8. Sign the optional history contract transaction.
 9. View the saved item in `My History`.
+10. Click `Sync Arc History` to read `RoastRecorded` events back from Arc.
+
+## 90-second Demo Script
+
+1. "MemeRoast turns wallet pain into viral meme content on Arc Testnet."
+2. Show the homepage and select a personality.
+3. Connect wallet and switch to Arc Testnet.
+4. Enter `Roast my wallet` and generate the free preview.
+5. Explain that preview is free, final generation costs `0.05 USDC`.
+6. Click final generation and sign the Arc Testnet USDC payment.
+7. Show the final caption, meme visual, image seed, payment tx, and metadata.
+8. Sign the history transaction and show the ArcScan link.
+9. Open `My History`, click `Sync Arc History`, and show the on-chain event
+   record loaded back into the UI.
+10. Close with: "This is a consumer AI payment loop powered by USDC on Arc."
 
 ## Built With
 
@@ -72,5 +87,5 @@ Working public testnet prototype.
 
 - Wire real Fal.ai / Flux / Grok image generation with Cloudinary upload.
 - Store all final metadata on IPFS.
-- Read wallet history back from Arc Testnet events.
+- Improve event indexing and metadata pinning for long-term on-chain history.
 - Improve Arc Blueprints agent execution path.

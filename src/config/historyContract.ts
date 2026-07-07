@@ -2,6 +2,10 @@ export const MEMEROAST_HISTORY_CONTRACT = normalizeContractAddress(
   process.env.NEXT_PUBLIC_MEMEROAST_HISTORY_CONTRACT,
 );
 
+export const MEMEROAST_HISTORY_START_BLOCK = parseStartBlock(
+  process.env.NEXT_PUBLIC_MEMEROAST_HISTORY_START_BLOCK,
+);
+
 export const memeRoastHistoryAbi = [
   {
     anonymous: false,
@@ -43,4 +47,16 @@ function normalizeContractAddress(address?: string) {
   }
 
   return address as `0x${string}`;
+}
+
+function parseStartBlock(value?: string) {
+  if (!value) {
+    return BigInt(0);
+  }
+
+  try {
+    return BigInt(value);
+  } catch {
+    return BigInt(0);
+  }
 }
